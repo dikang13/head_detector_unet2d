@@ -1,0 +1,3 @@
+[submodule "unet2d"]
+	path = unet2d
+	url = git@github.com:flavell-lab/head_detector_unet2d.git

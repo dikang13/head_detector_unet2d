@@ -1,0 +1,16 @@
+*.png
+*.png
+.ipynb_checkpoints/
+*.tif
+*.tar
+*.tif
+*.tar
+*.png
+data/*.h5
+data/*.jld2
+data/preCrop*.h5
+data/*.jld2
+*.png
+*.png
+data/*.jld2
+data/preCrop*.h5

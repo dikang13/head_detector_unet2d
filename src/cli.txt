@@ -1,0 +1,19 @@
+python src/train.py \
+        --config /store1/candy/prj_unet2d/unet2d-head-detector-train.yaml \
+        --data /store1/candy/prj_unet2d/data/preCropNet_cropped.h5 \
+        --output /store1/candy/prj_unet2d/exp \
+        --device cuda:3
+
+
+python src/plot_tb.py --logdir /store1/candy/prj_unet2d/exp/unet2d-head-detector-20250129/runs/unet2d-head-detector-20250129
+                        --output /path/to/custom/location.png
+
+
+python src/inference.py \
+        --model /store1/candy/prj_unet2d/exp/unet2d-head-detector-20250129/unet2d-head-detector-20250129_best.pt \
+        --data /store1/candy/prj_unet2d/data/postCropNet_2024.h5 \
+        --output /store1/candy/prj_unet2d/exp/unet2d-head-detector-20250129/predictions \
+        --device cuda:3 \
+        --n-test 480 \
+        --n-features 32 \
+        --scaling-factor 4096

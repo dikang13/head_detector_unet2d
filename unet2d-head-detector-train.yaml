@@ -1,0 +1,96 @@
+# ---------------------------------------------------------------------------------
+# Title: unet2d-head-detector configuration
+# Description:
+#   This file sets up training hyperparameters for a 2D U-Net model, 
+#   including learning rate scheduling, checkpointing intervals, 
+#   and data augmentation settings.
+# ---------------------------------------------------------------------------------
+
+# Name of the experiment (used for logging, checkpoints, etc.)
+exp_name: "unet2d-head-detector-20250130"
+
+# Number of training epochs
+n_epochs: 1000
+
+# Initial learning rate
+lr: 0.001
+
+# Factor by which to reduce the learning rate when a plateau is reached
+lr_scheduler_factor: 0.2
+
+# Number of epochs with no improvement after which learning rate will be reduced
+lr_scheduler_patience: 25
+
+# Number of features in the network's first convolution layer
+n_features: 64
+
+# Scaling factor for your input data or normalization
+scaling_factor: 4096
+
+# Weighting factor for your loss function
+loss_weight: 1
+
+# Which epoch to start at (useful if restarting training from a checkpoint)
+start_epoch: 0
+
+# Print logs every N iterations
+print_freq: 100
+
+# Save a checkpoint every N epochs
+checkpoint_freq: 10
+
+# Batch size for training
+batch_size: 64
+
+# Number of images to use for test evaluation
+n_test: 500
+
+# Number of images to use for validation
+n_val: 500
+
+# ---------------------------------------------------------------------------------
+# Augmentation settings
+#   This section defines data augmentation parameters for imgaug or similar libraries.
+#   Each key corresponds to a specific transformation and its associated parameters.
+# ---------------------------------------------------------------------------------
+augmentation:
+
+  # Range of translation along shorter dimension
+  TranslateX:
+    px: [-50, 50]
+
+  # Range of translation along longer dimension
+  TranslateY:
+    px: [-50, 50]
+
+  # Fraction of times to flip left-right
+  Fliplr: 0.5
+
+  # Fraction of times to flip upside down
+  Flipud: 0.5
+
+  # Gaussian blur parameters (range for sigma)
+  GaussianBlur:
+    sigma: [0, 1.0]
+
+  # Range for adjusting contrast
+  LinearContrast: [0.5, 2.0]
+
+  # Range for scalar multiplication on the entire matrix
+  Multiply: [0.3, 3.0]
+
+  # Probability of applying Elastic Transformation
+  Sometimes: 0.5
+
+  # Elastic transformation settings
+  ElasticTransformation:
+    alpha: [0.0, 6.5]  # strength of local warping
+    sigma: 2           # distortion field of local warping
+
+  # Affine transformations
+  Affine:
+    scale_mean: 1.0    # mean for random scale factor
+    scale_std: 0.1     # std dev for random scale factor
+    rotate: [-60, 60]  # rotation range in degrees
+    shear_mean: 0.0    # mean shear angle
+    shear_std: 2       # std dev for shear angle
