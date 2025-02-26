@@ -14,3 +14,4 @@ data/*.jld2
 *.png
 data/*.jld2
 data/preCrop*.h5
+exp/*
