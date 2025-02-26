@@ -59,6 +59,28 @@ class DiceCoefficientWithLogits(nn.Module):
         dice = dice_coefficient_with_logits(y, y_true, self.epsilon)
         
         return dice.mean()
+        
+class CustomDiceCoefficientWithLogits(nn.Module):
+    def __init__(self, epsilon=1e-6):
+        super(CustomDiceCoefficientWithLogits, self).__init__()
+        self.epsilon = epsilon
+        
+    def forward(self, y, y_true, weights=None):
+        # Get per-sample dice scores first (same as original)
+        dice = dice_coefficient_with_logits(y, y_true, self.epsilon)
+        
+        # Apply the transformation to each dice score
+        transformed_dice = torch.zeros_like(dice)
+        
+        # Create a mask for values below threshold
+        low_mask = dice < 0.05
+        
+        # Apply transformations based on masks
+        transformed_dice[low_mask] = 0.0 # heavily penalize misses or near-misses
+        transformed_dice[~low_mask] = torch.sqrt(dice[~low_mask]) # compress successes to a narrower range
+        
+        # Return mean of transformed values (same format as original)
+        return transformed_dice.mean()
 
 class DiceCoefficientWithLogitsMulti(nn.Module):
     def __init__(self, n_class, epsilon=1e-6):

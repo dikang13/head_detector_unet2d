@@ -3,7 +3,7 @@ import torch
 import torch.optim as optim
 from unet2d.model.unet_model import UNet2D
 from unet2d.model.losses import PixelwiseBCEWithLogitsLoss
-from unet2d.model.metrics import DiceCoefficientWithLogits
+from unet2d.model.metrics import CustomDiceCoefficientWithLogits #DiceCoefficientWithLogits
 import os
 
 def setup_model(args, device):
@@ -21,7 +21,7 @@ def setup_model(args, device):
     )
     
     f_loss = PixelwiseBCEWithLogitsLoss()
-    f_metric = DiceCoefficientWithLogits()
+    f_metric = CustomDiceCoefficientWithLogits() #DiceCoefficientWithLogits()
     
     if os.path.isfile(args["path_checkpoint"]):
         print("Continuing training from checkpoint")

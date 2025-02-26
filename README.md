@@ -67,14 +67,14 @@ To ensure a reproducible environment, a Conda environment file (`environment.yam
         --config ./unet2d-head-detector-train.yaml \
         --data ./data/preCropNet_cropped.h5 \
         --output ./exp \
-        --device cuda:0
+        --device cuda:2
    ```
      
-3. **Examine loss curves**:
+3. **Examine loss and performance curves**:
    ```bash
-   python src/plot_tb.py \
-        --logdir /path/to/exp/runs/folder \
-        --output /path/to/custom/location.png
+    python src/plot_training_curves.py \
+        --csv_path ./exp/unet2d-head-detector-20250225/unet2d-head-detector-20250225.csv \
+        --output_path ./exp/unet2d-head-detector-20250225/loss_curve.png
    ```   
 
 ### Inference

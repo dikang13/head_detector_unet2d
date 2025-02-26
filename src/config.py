@@ -19,8 +19,6 @@ def load_config(path_config, path_root):
 
     if not os.path.isdir(path_exp_base):
         os.makedirs(path_exp_base, exist_ok=True)
-
-    # Gather your main training parameters
     args = {
         "start_epoch": config_data["start_epoch"],
         "print_freq": config_data["print_freq"],
@@ -32,7 +30,6 @@ def load_config(path_config, path_root):
         "loss_weight": config_data["loss_weight"],
         "learning_rate": config_data["lr"],
         "batch_size": config_data["batch_size"],
-        "scaling_factor": config_data["scaling_factor"],
         "n_test": config_data["n_test"],
         "n_val": config_data["n_val"],
 

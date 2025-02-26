@@ -44,6 +44,51 @@ class AugTransformConstantPosWeights:
 
         return {"x": x_aug, "y_true": y_true_aug, "weights": weights}
 
+class AugTransformCenterToEdgeWeights:
+    """Creates weights that are highest at object centers and taper to 1.0 at boundaries"""
+    def __init__(self, aug, center_weight=5.0):
+        self.aug = aug
+        self.center_weight = center_weight
+        
+    def __call__(self, x, y_true):
+        # Augment
+        y_true = ia.SegmentationMapsOnImage(y_true, shape=y_true.shape)
+        x_aug, y_true_aug = self.aug(image=x, segmentation_maps=y_true)
+        
+        # Get binary mask
+        binary_mask = y_true_aug.arr[:, :, 0].astype(np.uint8)
+        
+        # Create weights (start with all ones - background weight)
+        weights = np.ones_like(binary_mask, dtype=np.float32)
+        
+        # If there's a labeled region
+        if np.any(binary_mask > 0):
+            # Calculate distance transform from background
+            from scipy.ndimage import distance_transform_edt
+            dist_from_bg = distance_transform_edt(binary_mask)
+            
+            # Normalize distances within each object to 0-1 range
+            # This creates a weight that's 1.0 at boundaries and increases toward center
+            if np.max(dist_from_bg) > 0:
+                normalized_dist = dist_from_bg / np.max(dist_from_bg)
+                
+                # Scale to desired weight range: 1.0 at edges to center_weight at centers
+                scaled_weights = 1.0 + (self.center_weight - 1.0) * normalized_dist
+                
+                # Apply only within foreground regions
+                weights[binary_mask > 0] = scaled_weights[binary_mask > 0]
+        
+        # Normalize image
+        x_aug = normalize(x_aug)
+        
+        # Reshape
+        x_aug = np.expand_dims(x_aug, 0).astype(np.float32)
+        y_true_aug = np.expand_dims(binary_mask, 0).astype(np.float32)
+        weights = np.expand_dims(weights, 0).astype(np.float32)
+        
+        return {"x": x_aug, "y_true": y_true_aug, "weights": weights}
+
+
 class AugTransformMultiClass:
     def __init__(self, aug):
         self.aug = aug

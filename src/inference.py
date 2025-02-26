@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from unet2d.model.unet_model import UNet2D
-from unet2d.model.metrics import DiceCoefficientWithLogits
+from unet2d.model.metrics import CustomDiceCoefficientWithLogits
 from data_loader import load_test_data
 import os
 import csv
@@ -57,18 +57,7 @@ def save_prediction(image, truth, pred, save_path, index, dice_score=None):
     
     plt.savefig(os.path.join(save_path, filename), bbox_inches='tight', dpi=150)
     plt.close()
-
-def compute_dice_score(pred, target):
-    """
-    Compute Dice score between binary masks.
-    pred and target should be binary tensors.
-    """
-    smooth = 1e-5
-    intersection = (pred & target).float().sum()
-    union = pred.float().sum() + target.float().sum()
     
-    dice = (2. * intersection + smooth) / (union + smooth)
-    return dice
 
 def run_inference(model, test_loader, device, output_dir, metric_fn):
     """Run inference and evaluate results."""
@@ -95,7 +84,7 @@ def run_inference(model, test_loader, device, output_dir, metric_fn):
             pred_mask = (y_pred > 0.5)
             
             # Calculate binary dice score
-            dice_score = compute_dice_score(pred_mask, y_true.bool())
+            dice_score = metric_fn(pred_mask, y_true.bool())
             dice_scores.append(dice_score.item())
             
             # Save visualization
@@ -140,6 +129,8 @@ def main():
                        help='Number of test samples')
     parser.add_argument('--n-features', type=int, default=64,
                        help='Number of features in UNet')
+    parser.add_argument('--scaling-factor', type=int, default=4096,
+                       help='Scalar for normalizing pixel intensities to 0-1')
     args = parser.parse_args()
     
     # Setup device
@@ -158,7 +149,7 @@ def main():
     )
     
     # Create metric function
-    metric_fn = DiceCoefficientWithLogits()
+    metric_fn = CustomDiceCoefficientWithLogits() #DiceCoefficientWithLogits()
     
     # Run inference and evaluation
     dice_scores = run_inference(model, test_loader, device, args.output, metric_fn)

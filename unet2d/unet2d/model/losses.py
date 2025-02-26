@@ -13,6 +13,7 @@ class PixelwiseBCEWithLogitsLoss(nn.Module):
         
         return result.mean()
 
+
 class PixelWiseCELogitsLoss(nn.Module):
     def __init__(self, weight_class):
         super(PixelWiseCELogitsLoss, self).__init__()

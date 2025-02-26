@@ -200,8 +200,6 @@ def train_model(model, device, data_loader, f_loss, f_metric, optimizer, schedul
             # print
             if (epoch % print_freq) == 0:
                 print("Epoch {}/{}".format(epoch, n_epochs - 1), end=" - ")
-                print('train t: {:.3f}'.format(train_batch_t.sum), end=" ")
-                print('val t: {:.3f}'.format(val_batch_t.sum), end=" ")
                 print('train loss: {:.4f}'.format(train_loss.avg), end=" ")
                 print('val loss: {:.4f}'.format(val_loss.avg))
 

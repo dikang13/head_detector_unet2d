@@ -27,10 +27,11 @@ def main():
         args.data, 
         config_args["n_test"], 
         config_args["n_val"], 
-        config_args["scaling_factor"],
         config_args["batch_size"],
         config_args["loss_weight"],
-        config_args["augmentation"]
+        config_args["augmentation"],
+        True,
+        os.path.join(path_exp_base, "dataloaders")
     )
     
     # Setup model

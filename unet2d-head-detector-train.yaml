@@ -7,10 +7,10 @@
 # ---------------------------------------------------------------------------------
 
 # Name of the experiment (used for logging, checkpoints, etc.)
-exp_name: "unet2d-head-detector-20250130"
+exp_name: "unet2d-head-detector-20250227"
 
 # Number of training epochs
-n_epochs: 1000
+n_epochs: 300
 
 # Initial learning rate
 lr: 0.001
@@ -24,9 +24,6 @@ lr_scheduler_patience: 25
 # Number of features in the network's first convolution layer
 n_features: 64
 
-# Scaling factor for your input data or normalization
-scaling_factor: 4096
-
 # Weighting factor for your loss function
 loss_weight: 1
 
@@ -34,13 +31,13 @@ loss_weight: 1
 start_epoch: 0
 
 # Print logs every N iterations
-print_freq: 100
+print_freq: 50
 
 # Save a checkpoint every N epochs
-checkpoint_freq: 10
+checkpoint_freq: 5
 
 # Batch size for training
-batch_size: 64
+batch_size: 128
 
 # Number of images to use for test evaluation
 n_test: 500
