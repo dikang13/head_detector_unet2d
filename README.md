@@ -82,13 +82,11 @@ To ensure a reproducible environment, a Conda environment file (`environment.yam
 1. **Run inference**:
    ```bash
    python src/inference.py \
-        --model ./exp/unet2d-head-detector-20250129/unet2d-head-detector-20250129_best.pt \
+        --model ./exp/unet2d-head-detector-20250227/unet2d-head-detector-20250227_best.pt \
         --data ./postCropNet_2024.h5 \
-        --output ./exp/unet2d-head-detector-20250129/predictions \
+        --config ./unet2d-head-detector-train.yaml \
+        --output ./exp/unet2d-head-detector-20250227/predictions \
         --device cuda:0 \
-        --n-test 500 \
-        --n-features 32 \
-        --scaling-factor 4096
    ```
 
 2. **Examine model predictions**:
@@ -96,13 +94,11 @@ To ensure a reproducible environment, a Conda environment file (`environment.yam
 
 
 ## Troubleshooting
-- **Interactive interface**
-  If a user prefers Jupyter Notebook over command line interface, an alterative is provided in `notebooks/src_alternative/train_val_test_unet.ipynb`.
     
 - **Out of Memory Errors**  
   Try reducing `batch_size` in `unet-2d-head-detector-train.yaml`.
 
 - **Slow Training**  
   - Ensure you have GPU acceleration (CUDA installed).
-  - The pipeline was tested on a single NVIDIA RTX A5500 and 6000 Ada. Using configurations specified in `unet-2d-head-detector-train.yaml`, model training finished in 4 hours and model inference on 500 test images took 3 minutes.
+  - The pipeline was tested on a single NVIDIA RTX A5500 and 6000 Ada. Using configurations specified in `unet-2d-head-detector-train.yaml`, model training finished in 3 hours and model inference on 500 test images took 3 minutes.
   - Heavier augmentation is expected to lengthen training time. 

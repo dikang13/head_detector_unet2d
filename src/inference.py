@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from unet2d.model.unet_model import UNet2D
 from unet2d.model.metrics import CustomDiceCoefficientWithLogits
 from data_loader import load_test_data
+from config import load_config
 import os
 import csv
 import argparse
@@ -121,30 +122,31 @@ def main():
                        help='Path to model weights')
     parser.add_argument('--data', type=str, required=True,
                        help='Path to H5 data file')
+    parser.add_argument('--config', type=str, required=True,
+                       help='Path to config file')
     parser.add_argument('--output', type=str, required=True,
                        help='Output directory for predictions')
     parser.add_argument('--device', type=str, default='cuda:0',
                        help='Device to use for inference')
-    parser.add_argument('--n-test', type=int, default=500,
-                       help='Number of test samples')
-    parser.add_argument('--n-features', type=int, default=64,
-                       help='Number of features in UNet')
-    parser.add_argument('--scaling-factor', type=int, default=4096,
-                       help='Scalar for normalizing pixel intensities to 0-1')
     args = parser.parse_args()
+    
+    # Load configuration
+    config_args, path_exp_base, exp_name = load_config(args.config, os.path.dirname(args.config))
+    
+    # Use command line args to override config if provided
+    n_test = config_args["n_test"]
+    n_features = config_args["n_features"]
     
     # Setup device
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
     
     # Load model
-    model = load_model(args.model, args.n_features, device)
+    model = load_model(args.model, n_features, device)
     
     # Create test data loader
     test_loader = load_test_data(
         args.data, 
-        args.n_test, 
-        args.scaling_factor,
+        n_test, 
         batch_size=1  # Use batch size 1 for inference
     )
     
