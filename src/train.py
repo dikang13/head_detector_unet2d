@@ -10,7 +10,6 @@ from unet2d.train import train_model
 def main():
     parser = argparse.ArgumentParser(description='Train UNet model')
     parser.add_argument('--config', type=str, required=True, help='Path to config file')
-    parser.add_argument('--data', type=str, required=True, help='Path to H5 data file')
     parser.add_argument('--output', type=str, required=True, help='Path to output directory')
     parser.add_argument('--device', type=str, default='cuda:0', help='Device to use for training')    
     args = parser.parse_args()
@@ -24,14 +23,8 @@ def main():
     
     # Load data
     data_loader = load_train_val_data(
-        args.data, 
-        config_args["n_test"], 
-        config_args["n_val"], 
-        config_args["batch_size"],
-        config_args["loss_weight"],
-        config_args["augmentation"],
-        True,
-        os.path.join(path_exp_base, "dataloaders")
+        config_args,
+        os.path.join(path_exp_base, "dataloaders") # visualization_dir for saving augmented data; if None, nothing is saved
     )
     
     # Setup model

@@ -18,6 +18,7 @@ def load_model(model_path, n_features, device):
     model.to(device)
     model.eval()
     return model
+    
 
 def save_prediction(image, truth, pred, save_path, index, dice_score=None):
     """Save the prediction visualization."""
@@ -63,9 +64,7 @@ def save_prediction(image, truth, pred, save_path, index, dice_score=None):
 def run_inference(model, test_loader, device, output_dir, metric_fn):
     """Run inference and evaluate results."""
     dice_scores = []
-    
     os.makedirs(output_dir, exist_ok=True)
-    
     model.eval()
     with torch.no_grad():
         for idx, sample in enumerate(tqdm(test_loader, desc="Processing")):
@@ -79,14 +78,13 @@ def run_inference(model, test_loader, device, output_dir, metric_fn):
             
             # Forward pass
             y_pred = model(x) # logits
+            dice_score = metric_fn(y_pred, y_true.bool())
+            dice_scores.append(dice_score.item())
+            
             y_pred = torch.sigmoid(y_pred) # prob 0-1
             
             # Get binary prediction
-            pred_mask = (y_pred > 0.5)
-            
-            # Calculate binary dice score
-            dice_score = metric_fn(pred_mask, y_true.bool())
-            dice_scores.append(dice_score.item())
+            # pred_mask = (y_pred > 0.5)
             
             # Save visualization
             save_prediction(
@@ -120,8 +118,6 @@ def main():
     parser = argparse.ArgumentParser(description='Run inference on test data')
     parser.add_argument('--model', type=str, required=True,
                        help='Path to model weights')
-    parser.add_argument('--data', type=str, required=True,
-                       help='Path to H5 data file')
     parser.add_argument('--config', type=str, required=True,
                        help='Path to config file')
     parser.add_argument('--output', type=str, required=True,
@@ -133,22 +129,14 @@ def main():
     # Load configuration
     config_args, path_exp_base, exp_name = load_config(args.config, os.path.dirname(args.config))
     
-    # Use command line args to override config if provided
-    n_test = config_args["n_test"]
-    n_features = config_args["n_features"]
-    
     # Setup device
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     
     # Load model
-    model = load_model(args.model, n_features, device)
+    model = load_model(args.model, config_args["n_features"], device)
     
     # Create test data loader
-    test_loader = load_test_data(
-        args.data, 
-        n_test, 
-        batch_size=1  # Use batch size 1 for inference
-    )
+    test_loader = load_test_data(config_args)
     
     # Create metric function
     metric_fn = CustomDiceCoefficientWithLogits() #DiceCoefficientWithLogits()

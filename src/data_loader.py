@@ -43,6 +43,7 @@ def create_augmentation(augmentation_params):
     ])
     return aug_train
 
+
 def min_max_by_percentile(img_data, min_percentile=50, max_percentile=99):
     """
     Apply min_max scaling to img_data such that 0 = p50, 1 = p99 by default
@@ -54,44 +55,80 @@ def min_max_by_percentile(img_data, min_percentile=50, max_percentile=99):
     img_data_normalized = np.clip(img_data_normalized, 0, 1)
     return img_data_normalized
 
-def load_train_val_data(path_h5, n_test, n_val, batch_size=64, loss_weight=1.0, augmentation_parameters=None, 
-                        visualize_data=False, visualization_dir=None):
-    """Load training and validation data."""
-    with h5py.File(path_h5, "r") as h5f:
-        dataset_names = list(h5f.keys())
+
+    
+    load_train_val_data(
+        config_args,
+        os.path.join(path_exp_base, "dataloaders") # savepath for augmented data; if None, nothing is saved
+    )
+    
+
+def load_train_val_data(config_args, visualization_dir=None):   
+    """Load training and validation data according to what is specified in config.yaml."""
+    
+    list_path_h5 = config_args["list_path_h5"]
+    frac_val = config_args["frac_val"]
+    frac_test = config_args["frac_test"]
+    batch_size = config_args["batch_size"]
+    loss_weight = config_args["loss_weight"]
+    augmentation_parameters = config_args["augmentation"]
         
     list_img = []
     list_label = []
-    with h5py.File(path_h5, "r") as h5f:
-        for datasetname_ in dataset_names:
-            dataset_ = h5f[datasetname_]
-            img_data = (dataset_["img"][()]).astype(np.float32)
-            img_data = min_max_by_percentile(img_data)
-            img = np.moveaxis(np.expand_dims(img_data, axis=2), [0,1,2], [2,1,0])
-            list_img.append(img)
+    idx_val = []
+    idx_train = []
+    curr_idx = 0  # Track the current index in our final lists
+    
+    for path_h5 in list_path_h5:
+        with h5py.File(path_h5, "r") as h5f:
+            dataset_names = list(h5f.keys())
             
-            label_data = dataset_["label"][()].astype(bool)
-            label = np.moveaxis(np.expand_dims(label_data, axis=2), [0,1,2], [2,1,0])
-            list_label.append(label)
+            # calculate number of test frames and validation frames
+            n_total = len(dataset_names)
+            n_test = int(np.floor(n_total * frac_test))
+            n_val = int(np.floor(n_total * frac_val))
+            
+            for i, datasetname_ in enumerate(dataset_names):
+                # Skip test samples completely
+                if i < n_test:
+                    continue
+                
+                # Load the data
+                dataset_ = h5f[datasetname_]
+                img_data = (dataset_["img"][()]).astype(np.float32)
+                img_data = min_max_by_percentile(img_data) # normalize images
+                img = np.moveaxis(np.expand_dims(img_data, axis=2), [0,1,2], [2,1,0])
+                list_img.append(img)
+                
+                label_data = dataset_["label"][()].astype(bool)
+                label = np.moveaxis(np.expand_dims(label_data, axis=2), [0,1,2], [2,1,0])
+                list_label.append(label)
+                
+                # Assign to validation or training set
+                if i < n_test + n_val: # Validation samples
+                    idx_val.append(curr_idx)
+                else: # Training samples
+                    idx_train.append(curr_idx)
+                
+                curr_idx += 1  # Increment our index counter
     
-    # Only get validation and training indices
-    idx_val = np.arange(n_test, n_test+n_val)
-    idx_train = np.arange(n_test+n_val, len(list_img))
+    # Convert to numpy arrays and check for disjoint sets
+    idx_val = np.array(idx_val)
+    idx_train = np.array(idx_train)
+    assert len(np.intersect1d(idx_train, idx_val)) == 0, "Train-val split have repeated frames!"
+    print(f"{len(idx_train)} frames go to train set. {len(idx_val)} frames go to validation set.")
     
-    X_val = np.concatenate(list(map(list_img.__getitem__, idx_val)), axis=0)
-    Y_val = np.concatenate(list(map(list_label.__getitem__, idx_val)), axis=0)
     X_train = np.concatenate(list(map(list_img.__getitem__, idx_train)), axis=0)
     Y_train = np.concatenate(list(map(list_label.__getitem__, idx_train)), axis=0)
+    X_val = np.concatenate(list(map(list_img.__getitem__, idx_val)), axis=0)
+    Y_val = np.concatenate(list(map(list_label.__getitem__, idx_val)), axis=0)
     
-    print(f"Training data type: {X_train.dtype}")
-    print(f"Training data shape: {X_train.shape}")
-    print(f"Training label shape: {Y_train.shape}")
-    
-    # Create augmentations
+    # Create augmentations for training set
     aug_train = create_augmentation(augmentation_parameters)
     # tfm_train = AugTransformConstantPosWeights(aug_train, loss_weight)
     # tfm_val = AugTransformConstantPosWeights(iaa.Identity(), loss_weight)
-    
+
+    # Apply center to edge weights for pixel-wise loss function
     center_weight = 5.0
     tfm_train = AugTransformCenterToEdgeWeights(aug_train, center_weight)
     tfm_val = AugTransformCenterToEdgeWeights(iaa.Identity(), center_weight)
@@ -105,12 +142,13 @@ def load_train_val_data(path_h5, n_test, n_val, batch_size=64, loss_weight=1.0, 
     val_loader = utils.DataLoader(data_val, shuffle=False, num_workers=0, batch_size=batch_size)
 
     # Visualize datasets if requested
-    if visualize_data and visualization_dir is not None:
+    if visualization_dir is not None:
         visualize_dataset(train_loader, 'train', visualization_dir)
         visualize_dataset(val_loader, 'val', visualization_dir)
     
     return {"train": train_loader, "val": val_loader}
 
+    
 def visualize_dataset(data_loader, dataset_name, output_dir):
     """Visualize all samples in a dataset and save to output_dir."""
     import matplotlib.pyplot as plt
@@ -119,12 +157,10 @@ def visualize_dataset(data_loader, dataset_name, output_dir):
     # Create output directories
     dataset_dir = os.path.join(output_dir, dataset_name)
     img_dir = os.path.join(dataset_dir, 'images')
-    label_dir = os.path.join(dataset_dir, 'labels')
     weight_dir = os.path.join(dataset_dir, 'weights')
     overlay_dir = os.path.join(dataset_dir, 'overlays')
     
     os.makedirs(img_dir, exist_ok=True)
-    os.makedirs(label_dir, exist_ok=True)
     os.makedirs(weight_dir, exist_ok=True)
     os.makedirs(overlay_dir, exist_ok=True)
     
@@ -154,15 +190,6 @@ def visualize_dataset(data_loader, dataset_name, output_dir):
                         bbox_inches='tight', pad_inches=0.1, dpi=150)
             plt.close()
             
-            # Save label
-            plt.figure(figsize=(6, 6))
-            plt.imshow(label, cmap='binary')
-            plt.axis('off')
-            plt.tight_layout()
-            plt.savefig(os.path.join(label_dir, f'sample_{sample_idx:04d}_label.png'), 
-                        bbox_inches='tight', pad_inches=0.1, dpi=150)
-            plt.close()
-            
             # Save weight map with colorbar
             plt.figure(figsize=(7, 6))
             im = plt.imshow(weight, cmap='viridis')
@@ -187,33 +214,35 @@ def visualize_dataset(data_loader, dataset_name, output_dir):
     print(f"Saved {sample_idx} visualizations for {dataset_name} dataset to {output_dir}")
 
 
-def load_test_data(path_h5, n_test, batch_size=1, loss_weight=1.0):
+def load_test_data(config_args, batch_size=1):
     """Load test data only."""
-    with h5py.File(path_h5, "r") as h5f:
-        dataset_names = list(h5f.keys())
-        
+    list_path_h5 = config_args["list_path_h5"]
+    frac_test = config_args["frac_test"]
+    loss_weight = config_args["loss_weight"]
+    
     list_img = []
     list_label = []
-    with h5py.File(path_h5, "r") as h5f:
-        for i, datasetname_ in enumerate(dataset_names):
-            if i >= n_test:  # Only load first n_test samples
-                break
-            dataset_ = h5f[datasetname_]
-            img_data = (dataset_["img"][()]).astype(np.float32)
-            img_data = min_max_by_percentile(img_data)
-            img = np.moveaxis(np.expand_dims(img_data, axis=2), [0,1,2], [2,1,0])
-            list_img.append(img)
-            
-            label_data = dataset_["label"][()].astype(bool)
-            label = np.moveaxis(np.expand_dims(label_data, axis=2), [0,1,2], [2,1,0])
-            list_label.append(label)
-    
+    for path_h5 in list_path_h5:
+        with h5py.File(path_h5, "r") as h5f:
+            dataset_names = list(h5f.keys())
+            n_total = len(dataset_names)
+            n_test = np.floor(n_total * frac_test)
+            for i, datasetname_ in enumerate(dataset_names):
+                if i >= n_test:  # Only load first n_test samples
+                    break
+                dataset_ = h5f[datasetname_]
+                img_data = (dataset_["img"][()]).astype(np.float32)
+                img_data = min_max_by_percentile(img_data)
+                img = np.moveaxis(np.expand_dims(img_data, axis=2), [0,1,2], [2,1,0])
+                list_img.append(img)
+                
+                label_data = dataset_["label"][()].astype(bool)
+                label = np.moveaxis(np.expand_dims(label_data, axis=2), [0,1,2], [2,1,0])
+                list_label.append(label)
+
+    print(f"{len(list_img)} frames go to test set.")
     X_test = np.concatenate(list_img, axis=0)
     Y_test = np.concatenate(list_label, axis=0)
-    
-    print(f"Test data type: {X_test.dtype}")
-    print(f"Test data shape: {X_test.shape}")
-    print(f"Test label shape: {Y_test.shape}")
     
     # Create test dataset with identity transform
     tfm_test = AugTransformConstantPosWeights(iaa.Identity(), loss_weight)

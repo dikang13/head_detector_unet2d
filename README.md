@@ -64,8 +64,7 @@ To ensure a reproducible environment, a Conda environment file (`environment.yam
 2. **Run training**:
    ```bash
    python src/train.py \
-        --config ./unet2d-head-detector-train.yaml \
-        --data ./data/preCropNet_cropped.h5 \
+        --config ./config.yaml \
         --output ./exp \
         --device cuda:2
    ```
@@ -73,8 +72,8 @@ To ensure a reproducible environment, a Conda environment file (`environment.yam
 3. **Examine loss and performance curves**:
    ```bash
     python src/plot_training_curves.py \
-        --csv_path ./exp/unet2d-head-detector-20250225/unet2d-head-detector-20250225.csv \
-        --output_path ./exp/unet2d-head-detector-20250225/loss_curve.png
+        --csv_path ./exp/unet2d-20250228/unet2d-20250228.csv \
+        --output_path ./exp/unet2d-20250228/loss_curve.png
    ```   
 
 ### Inference
@@ -82,11 +81,10 @@ To ensure a reproducible environment, a Conda environment file (`environment.yam
 1. **Run inference**:
    ```bash
    python src/inference.py \
-        --model ./exp/unet2d-head-detector-20250227/unet2d-head-detector-20250227_best.pt \
-        --data ./postCropNet_2024.h5 \
-        --config ./unet2d-head-detector-train.yaml \
-        --output ./exp/unet2d-head-detector-20250227/predictions \
-        --device cuda:0 \
+        --model ./exp/unet2d-20250228/unet2d-20250228_best.pt \
+        --config ./config.yaml \
+        --output ./exp/unet2d-20250228/predictions \
+        --device cuda:2
    ```
 
 2. **Examine model predictions**:

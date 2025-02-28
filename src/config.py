@@ -30,8 +30,9 @@ def load_config(path_config, path_root):
         "loss_weight": config_data["loss_weight"],
         "learning_rate": config_data["lr"],
         "batch_size": config_data["batch_size"],
-        "n_test": config_data["n_test"],
-        "n_val": config_data["n_val"],
+        "frac_test": config_data["frac_test"],
+        "frac_val": config_data["frac_val"],
+        "list_path_h5": config_data["list_path_h5"],
 
         # save paths
         "path_checkpoint": path_checkpoint,

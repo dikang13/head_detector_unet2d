@@ -5,11 +5,27 @@ def dice_coefficient(y_pred, y_true, epsilon=1e-6):
     y_pred = y_pred.flatten(start_dim=1)
     y_true = y_true.flatten(start_dim=1)
         
-    intersaction = (2 * y_pred * y_true)
+    intersection = (2 * y_pred * y_true)
     cardinality = (y_pred + y_true + epsilon)
         
-    result = intersaction.sum(dim=1) / cardinality.sum(dim=1)
+    result = intersection.sum(dim=1) / cardinality.sum(dim=1)
 
+    return result
+
+def dice_coefficient_negative_cases(y_pred, y_true, epsilon=1e-6):
+    y_pred = y_pred.flatten(start_dim=1)
+    y_true = y_true.flatten(start_dim=1)
+    
+    # Calculate regular Dice coefficient
+    intersection = (2 * y_pred * y_true)
+    cardinality = (y_pred + y_true + epsilon)
+    
+    result = intersection.sum(dim=1) / cardinality.sum(dim=1)
+    
+    # Where both are all zeros, set Dice to 1.0 (perfect score)
+    both_empty = (y_true.sum(dim=1) == 0) & (y_pred.sum(dim=1) == 0)
+    result[both_empty] = 1.0
+    
     return result
 
 def dice_coefficient_multi(y_pred, y_true, n_class, epsilon=1e-6):
@@ -66,17 +82,17 @@ class CustomDiceCoefficientWithLogits(nn.Module):
         self.epsilon = epsilon
         
     def forward(self, y, y_true, weights=None):
-        # Get per-sample dice scores first (same as original)
-        dice = dice_coefficient_with_logits(y, y_true, self.epsilon)
-        
+        # Get per-sample dice scores
+        dice = dice_coefficient_negative_cases(y, y_true, self.epsilon)
+
         # Apply the transformation to each dice score
         transformed_dice = torch.zeros_like(dice)
         
         # Create a mask for values below threshold
-        low_mask = dice < 0.05
+        low_mask = dice < 0.01
         
         # Apply transformations based on masks
-        transformed_dice[low_mask] = 0.0 # heavily penalize misses or near-misses
+        transformed_dice[low_mask] = 0.0 # heavily penalize misses or near-misses by setting performance metric 0
         transformed_dice[~low_mask] = torch.sqrt(dice[~low_mask]) # compress successes to a narrower range
         
         # Return mean of transformed values (same format as original)
