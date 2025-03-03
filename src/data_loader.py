@@ -54,13 +54,6 @@ def min_max_by_percentile(img_data, min_percentile=50, max_percentile=99):
     img_data_normalized = (img_data - img_data_min) / (img_data_max - img_data_min)
     img_data_normalized = np.clip(img_data_normalized, 0, 1)
     return img_data_normalized
-
-
-    
-    load_train_val_data(
-        config_args,
-        os.path.join(path_exp_base, "dataloaders") # savepath for augmented data; if None, nothing is saved
-    )
     
 
 def load_train_val_data(config_args, visualization_dir=None):   

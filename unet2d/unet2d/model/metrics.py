@@ -12,7 +12,8 @@ def dice_coefficient(y_pred, y_true, epsilon=1e-6):
 
     return result
 
-def dice_coefficient_negative_cases(y_pred, y_true, epsilon=1e-6):
+def dice_coefficient_negative_cases(y, y_true, epsilon=1e-6):
+    y_pred = torch.sigmoid(y)
     y_pred = y_pred.flatten(start_dim=1)
     y_true = y_true.flatten(start_dim=1)
     

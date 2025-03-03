@@ -72,8 +72,8 @@ To ensure a reproducible environment, a Conda environment file (`environment.yam
 3. **Examine loss and performance curves**:
    ```bash
     python src/plot_training_curves.py \
-        --csv_path ./exp/unet2d-20250228/unet2d-20250228.csv \
-        --output_path ./exp/unet2d-20250228/loss_curve.png
+        --csv_path ./exp/unet2d-20250303/unet2d-20250303.csv \
+        --output_path ./exp/unet2d-20250303/loss_curve.png
    ```   
 
 ### Inference
@@ -81,9 +81,9 @@ To ensure a reproducible environment, a Conda environment file (`environment.yam
 1. **Run inference**:
    ```bash
    python src/inference.py \
-        --model ./exp/unet2d-20250228/unet2d-20250228_best.pt \
+        --model ./exp/unet2d-20250303/unet2d-20250303_best.pt \
         --config ./config.yaml \
-        --output ./exp/unet2d-20250228/predictions \
+        --output ./exp/unet2d-20250303/predictions \
         --device cuda:2
    ```
 

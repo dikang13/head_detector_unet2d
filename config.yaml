@@ -7,7 +7,7 @@
 # ---------------------------------------------------------------------------------
 
 # Name of the experiment (used for logging, checkpoints, etc.)
-exp_name: "unet2d-20250229"
+exp_name: "unet2d-20250303"
 
 # List of data files (img-label pairs in hdf5 format, all with the same XY dimensions)
 list_path_h5:
@@ -17,7 +17,7 @@ list_path_h5:
   - "./data/immob_postCropNet.h5"
 
 # Number of training epochs
-n_epochs: 400
+n_epochs: 200
 
 # Initial learning rate
 lr: 0.001
